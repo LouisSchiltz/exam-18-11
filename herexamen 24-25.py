@@ -217,3 +217,114 @@ class PassGraph:
 
         return dist
 
+
+
+
+def _load_from_txt(self, path_name: str):
+        """
+        Interne helper om een graaf in te lezen uit een tekstbestand
+        volgens het opgegeven formaat.
+        """
+        current_section = None  # "players" of "passes"
+
+        with open(path_name, "r", encoding="utf-8") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+
+                # lege regel of comment overslaan
+                if not line or line.startswith("#"):
+                    continue
+
+                # sectie-header?
+                if line.startswith("[") and line.endswith("]"):
+                    if line == "[PLAYERS]":
+                        current_section = "players"
+                    elif line == "[PASSES]":
+                        current_section = "passes"
+                    else:
+                        raise ValueError(f"Onbekende sectie: {line}")
+                    continue
+
+                if current_section is None:
+                    raise ValueError(f"Data buiten sectie: {line}")
+
+                # ---- PLAYERS-sectie ----
+                if current_section == "players":
+                    parts = line.split(";")
+                    if len(parts) != 2:
+                        raise ValueError(f"Ongeldige spelerregel: {line}")
+
+                    name = parts[0].strip()
+                    number_str = parts[1].strip()
+
+                    try:
+                        number = int(number_str)
+                    except ValueError:
+                        raise ValueError(f"Ongeldig rugnummer: {number_str}")
+
+                    self.add_player(Player(name, number))
+
+                # ---- PASSES-sectie ----
+                elif current_section == "passes":
+                    # vorm: sender_name -> receiver_name : nr
+                    try:
+                        left, nr_str = line.split(":", 1)
+                        sender_part, receiver_part = left.split("->", 1)
+                    except ValueError:
+                        raise ValueError(f"Ongeldige passregel: {line}")
+
+                    sender_name = sender_part.strip()
+                    receiver_name = receiver_part.strip()
+                    nr_str = nr_str.strip()
+
+                    try:
+                        nr = int(nr_str)
+                    except ValueError:
+                        raise ValueError(f"Ongeldige pass-telling: {nr_str}")
+
+                    if nr <= 0:
+                        raise ValueError(f"Pass-aantal moet positief zijn: {nr}")
+
+                    sender = self.get_player(sender_name)
+                    receiver = self.get_player(receiver_name)
+                    if sender is None or receiver is None:
+                        raise ValueError(f"Pass verwijst naar onbekende speler: {line}")
+
+                    self.add_pass(sender, receiver, nr)
+
+    def save_to_txt(self, path: str):
+        """
+        Sla de volledige graaf op in precies dit formaat:
+
+        [PLAYERS]
+        name;number
+        ...
+
+        [PASSES]
+        sender_name -> receiver_name : nr
+        ...
+        """
+        with open(path, "w", encoding="utf-8") as f:
+            # [PLAYERS]-sectie
+            f.write("[PLAYERS]\n")
+            for player in sorted(self._players, key=lambda p: p.name):
+                f.write(f"{player.name};{player.number}\n")
+
+            f.write("\n[PASSES]\n")
+
+            # alle passes verzamelen en sorteren
+            all_passes = []
+            for plist in self.adj.values():
+                all_passes.extend(plist)
+
+            all_passes.sort(
+                key=lambda p: (p.get_start().name, p.get_end().name)
+            )
+
+            for p in all_passes:
+                sender_name = p.get_start().name
+                receiver_name = p.get_end().name
+                count = p.get_weight()
+                f.write(f"{sender_name} -> {receiver_name} : {count}\n")
+
+
