@@ -1,3 +1,4 @@
+#HIER IS DE FULFILL DEMAND OP EEN ANDERE MANIER ALS PIM2
 
 class Batch:
     def __init__(self, quantity, cost_per_unit):
@@ -65,4 +66,5 @@ class Product:
         while current is not None:
             output += str(current) + "\n"
             current = current.next
+
         return output.strip()
