@@ -18,7 +18,7 @@ class Product:
     def add_batch(self, quantity, cost_per_unit):
         self.batches.append(Batch(quantity, cost_per_unit))
 
-    def fulfill_demand(self, demand):
+    def fulfill_demand(self, demand):  #zie ook 'andere' manier om dit op te lossen in inventory management 1
         totaal = 0
         k = 0
         while k < len(self.batches):
@@ -43,35 +43,35 @@ class Product:
 
 class Inventory_Manager:
     def __init__(self):
-        self.woordenboek = {}
+        self.woordenboek = {}   #aanmaken van een dictionary met als key product_name
 
     def add_product(self, product_name, holding_cost, stockout_penalty):
         if product_name in self.woordenboek:
             return f"Product {product_name} already exists."
         else:
-            self.woordenboek[product_name] = Product(product_name,[], holding_cost, stockout_penalty)
+            self.woordenboek[product_name] = Product(product_name,[], holding_cost, stockout_penalty) #pas hier dat we de key = product_name definieren
 
     def restock_product(self, product_name, quantity, cost_per_unit):
-        if product_name in self.woordenboek:
-            self.woordenboek[product_name].add_batch(quantity, cost_per_unit)
+        if product_name in self.woordenboek:                                        
+            self.woordenboek[product_name].add_batch(quantity, cost_per_unit) #indien de key in de dictionary is gaan we daar via add batch het product gaan restocken
         else:
             return f"Product {product_name} not found"
 
     def simulate_demand(self, min_demand= 0, max_demand= 20):
-        vragenboek = {}
+        vragenboek = {}   
         for product in self.woordenboek:
-            demand = random.randint(min_demand, max_demand)
-            vragenboek[product] = demand
+            demand = random.randint(min_demand, max_demand)  #we gaan hier een random demand genereren dat we gaan linken aan een product
+            vragenboek[product] = demand   #key=product en value is gelijk aan de demand
         return vragenboek
 
     def simulate_dag(self, demand):
         stockoutkost = 0
         aanhoudkost = 0
 
-        for product in demand:
+        for product in demand:   #loop for all the products in demand 
 
-            vraag = demand[product]
-            produkt = self.woordenboek[product]
+            vraag = demand[product]             #
+            produkt = self.woordenboek[product] #retrieve the product 
             totaal = 0
 
             for k in range(len(produkt.batches)):
@@ -126,3 +126,4 @@ inventaris.restock_product("Patat", 5, 5)
 #print(inventaris.simulate_dag(vragen))
 #inventaris.save_to_csv('goat.csv')
 print(inventaris.print_inventory())
+
